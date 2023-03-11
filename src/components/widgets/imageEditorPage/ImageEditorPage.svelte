@@ -9,9 +9,7 @@
 	let fields: any;
 	let files: any = [];
 
-	
- console.log(files , "filesssssssssssss")
-	let getData = async () => {
+		let getData = async () => {
 
 		for (let i = 0; i < files.length; i++) {
 			let fieldsData = _fieldsValue[i];

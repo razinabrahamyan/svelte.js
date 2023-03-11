@@ -63,7 +63,12 @@
 			}
 		});
 	async function submit() {
-		await saveFormData(collection);
+		if(collection.name === "Image Editor") {
+			saveEditedImage.set(true)
+		}else{
+			await saveFormData(collection);
+		}	
+
 		refresh(collection);
 		showFields = false;
 		$entryData = undefined;

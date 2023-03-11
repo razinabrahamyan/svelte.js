@@ -73,7 +73,6 @@ app.use(cors());
 app.use(cookieParser());
 app.use(express.static('./build'));
 app.get('/get_collections', async (req, res) => {
-	console.log(schemas);
 	res.send(schemas);
 });
 
@@ -98,8 +97,6 @@ app.post('/api/signin', async (req, res) => {
 
 	if (!user) return res.send({ status: 404 });
 	const session = await auth.createSession(user.userId);
-	console.log(session);
-
 	res.send({ user: user.username, session: session.sessionId, status: 200 });
 });
 
@@ -113,8 +110,6 @@ app.post('/api/signup', async (req, res) => {
 			}
 		})
 		.catch(() => null);
-	console.log( "2222");
-
 	if (!user) return res.send({ status: 404 });
 	const session = await auth.createSession(user.userId);
 	res.send({ user: user.username, session: session.sessionId, status: 200 });
@@ -190,83 +185,81 @@ app.delete('/api/:endpoint', async (req, res) => {
 
 // POST request that creates one or more new entries in a specified collection, using data from the request body.
 
-app.post('/api/:endpoint', async (req, res) => {
-
-
-	console.log(req.files , "===================")
-	console.log(req.body.crop_left, "ssssssssssssss")
-
-	if(req.files && req.body.crop_left){
-		const canvas = createCanvas(+req.body.width, +req.body.height);
-		const ctx = canvas.getContext('2d');
-		ctx.clearRect(0, 0, req.body.width, req.body.height);
-		const _files = (req.files as Array<Express.Multer.File>) || [];
-		for ( const file of _files ) {
-			const {buffer, fieldname, ...meta} = file;
-			const blur_areas: any = [];
-			for (const el of JSON.parse(req.body.blur_areas)) {
-				let top = Math.floor(Math.sin(+req.body.rotate * (Math.PI/180))*((req.body.width * req.body.rotateScale - req.body.width)/2) + Math.cos(+req.body.rotate * (Math.PI/180)) * ((req.body.height * req.body.rotateScale - req.body.height)/2) - +el.top)
-				let left = Math.floor(Math.cos(+req.body.rotate * (Math.PI/180))*((req.body.width * req.body.rotateScale - req.body.width)/2) + Math.sin(+req.body.rotate * (Math.PI/180)) * ((req.body.height * req.body.rotateScale - req.body.height)/2) - +el.left)
-				top = Math.abs(top);
-				left = Math.abs(left);
-				if(+req.body.rotate >= 270){
-					left = Math.abs(req.body.width - left - el.width)
-				}else if(+req.body.rotate >= 180){
-					top = Math.abs(req.body.height - top - el.height)
-					left = Math.abs(req.body.width - left - el.width)
-				}else if( +req.body.rotate >= 90 ){
-					top = Math.abs(req.body.height - top - el.height)
-				}
-				if(top + +el.height > +req.body.height){
-					top -= top + +el.height - req.body.height
-				}
-				if(left + +el.width > +req.body.width){
-					left -= left + +el.width - req.body.width
-				}
-				const blurArea = await sharp(buffer)
-					.extract({left: left , top: top, width: +el.width, height: +el.height})
-					.blur(10)
-					.toBuffer();
-				blur_areas.push({image: blurArea, left: left, top: top, width: +el.width, height: +el.height});
-			}
-			const mainImage = new Image();
-			mainImage.onload = function () {
-				ctx.drawImage(mainImage,0,0, +req.body.width, +req.body.height);
-			}
-			mainImage.src = buffer;
-			for (const el of blur_areas) {
-				const image = new Image();
-				image.onload = function () {
-					ctx.drawImage(image, +el.left, +el.top, +el.width, +el.height);
-				}
-				image.src = el.image;
-			}
-			await sharp(canvas.toBuffer())
-				.extract({ left: +req.body.crop_left, top: +req.body.crop_top, width: req.body.width - req.body.crop_right - req.body.crop_left, height: req.body.height - req.body.crop_bottom - req.body.crop_top })
-				.rotate(+req.body.rotate)
-				.toFile('media/image_array/' + req.body.name + '.webp');
-		}
-		const collection = collections[req.params.endpoint];
-		if (!collection) return "collection not found!!";
-		res.send(await collection.insertMany({
-			Name: req.body.name,
-			'Multi Image Array': {
-				originalname: req.body.name + '.webp',
-				mimetype: 'image/webp'
-			}}));
-	}else {
-		for (let key in req.body) {
-			try {
-				req.body[key] = JSON.parse(req.body[key]);
-			} catch (e) {
-			}
-		}
-		let collection = collections[req.params.endpoint];
-		if (!collection) return 'collection not found!!';
-		let files = saveFiles(req);
-		res.send(await collection.insertMany({...req.body, ...files}));
-	}
-});
+app.post('/api/:endpoint', async (req, res) => {	
+	 if(req.files && req.body.crop_left){ 
+		 const canvas = createCanvas(+req.body.width, +req.body.height);
+		 const ctx = canvas.getContext('2d');
+		 ctx.clearRect(0, 0, req.body.width, req.body.height);
+		 const _files = (req.files as Array<Express.Multer.File>) || [];
+		 for ( const file of _files ) { 
+			 const {buffer, fieldname, ...meta} = file;
+			 const blur_areas: any = [];
+			 for (const el of JSON.parse(req.body.blur_areas)) {
+				 let top = Math.floor(Math.sin(+req.body.rotate * (Math.PI/180))*((req.body.width * req.body.rotateScale - req.body.width)/2) + Math.cos(+req.body.rotate * (Math.PI/180)) * ((req.body.height * req.body.rotateScale - req.body.height)/2) - +el.top)
+				 let left = Math.floor(Math.cos(+req.body.rotate * (Math.PI/180))*((req.body.width * req.body.rotateScale - req.body.width)/2) + Math.sin(+req.body.rotate * (Math.PI/180)) * ((req.body.height * req.body.rotateScale - req.body.height)/2) - +el.left)
+				 top = Math.abs(top);
+				 left = Math.abs(left);
+				 if(+req.body.rotate >= 270){
+					 left = Math.abs(req.body.width - left - el.width)
+				 }else if(+req.body.rotate >= 180){
+					 top = Math.abs(req.body.height - top - el.height)
+					 left = Math.abs(req.body.width - left - el.width)
+				 }else if( +req.body.rotate >= 90 ){
+					 top = Math.abs(req.body.height - top - el.height)
+				 }
+				 if(top + +el.height > +req.body.height){
+					 top -= top + +el.height - req.body.height
+				 }
+				 if(left + +el.width > +req.body.width){
+					 left -= left + +el.width - req.body.width
+				 }
+				 const blurArea = await sharp(buffer)
+					 .extract({left: left , top: top, width: +el.width, height: +el.height})
+					 .blur(10)
+					 .toBuffer();
+				 blur_areas.push({image: blurArea, left: left, top: top, width: +el.width, height: +el.height});
+			 }
+			 const mainImage = new Image();
+			 mainImage.onload = function () {
+				 ctx.drawImage(mainImage,0,0, +req.body.width, +req.body.height);
+			 }
+			 mainImage.src = buffer;
+			 for (const el of blur_areas) {
+				 const image = new Image();
+				 image.onload = function () {
+					 ctx.drawImage(image, +el.left, +el.top, +el.width, +el.height);
+				 }
+				 image.src = el.image;
+			 }
+			 await sharp(canvas.toBuffer())
+				 .extract({ left: +req.body.crop_left, top: +req.body.crop_top, width: req.body.width - req.body.crop_right - req.body.crop_left, height: req.body.height - req.body.crop_bottom - req.body.crop_top })
+				 .rotate(+req.body.rotate)
+				 .toFile('media/image_array/' + req.body.name + '.webp');
+		 }
+	 
+ 
+		 const collection = collections[req.params.endpoint];
+		 if (!collection) return "collection not found!!";
+		 res.send(await collection.insertMany({
+			 Name: req.body,
+			 'Multi Image Array': {
+				 originalname: req.body.name + '.webp',
+				 mimetype: 'image/webp'
+			 }}));
+	 }else {
+		 for (let key in req.body) {
+			 try {
+				 req.body[key] = JSON.parse(req.body[key]);
+			 } catch (e) {
+			 }
+		 }
+		 let collection = collections[req.params.endpoint];
+		 if (!collection) return 'collection not found!!';
+		 let files = saveFiles(req);
+		 res.send(await collection.insertMany({...req.body, ...files}));
+	 }
+ });
+ 
 
 
 // routes for frontend
