@@ -55,6 +55,7 @@
 	}
 
 	function saveImage() {
+		console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 		const blurAreas: any = [];
 		blurs.forEach((element) => {
 			blurAreas.push({

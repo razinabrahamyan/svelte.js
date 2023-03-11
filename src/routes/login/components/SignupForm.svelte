@@ -25,17 +25,17 @@
 		password: { status: false, msg: '' },
 		token: { status: false, msg: '' }
 	};
+		console.log(email , "ssssssssss")
 
 	async function signup() {
 		// email validation check
+
 		email = email.trim();
 		let emailRegex = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 		let error = false;
-
 		if (!username) {
 			errorStatus.username.msg = $LL.LOGIN_usernamemsg_empty();
 		}
-
 		if (!emailRegex.test(email)) {
 			errorStatus.email.status = true;
 			errorStatus.email.msg = $LL.LOGIN_emailmsg_valid();
@@ -50,32 +50,30 @@
 		if (!email) {
 			errorStatus.email.msg = $LL.LOGIN_emailmsg_empty();
 		}
-
 		// password checks
 		if (!password) {
 			errorStatus.password.msg = $LL.LOGIN_passwordmsg_empty();
 			errorStatus.password.status = true;
 			error = true;
 		}
-
-		if (password !== confirmPassword) {
-			errorStatus.confirm.msg = $LL.LOGIN_passwordmsg_confirm();
-			errorStatus.confirm.status = true;
-			error = true;
-		}
+		// if (password !== confirmPassword) {
+		// 	errorStatus.confirm.msg = $LL.LOGIN_passwordmsg_confirm();
+		// 	errorStatus.confirm.status = true;
+		// 	error = true;
+		// }
 
 		// token check
-		if (token === '' || token === null || typeof token === 'undefined') {
-			errorStatus.token.msg = $LL.LOGIN_Token();
-			errorStatus.token.status = true;
-			error = true;
-		}
+		// if (token === '' || token === null || typeof token === 'undefined') {
+		// 	errorStatus.token.msg = $LL.LOGIN_Token();
+		// 	errorStatus.token.status = true;
+		// 	error = true;
+		// }
 
 		if (error) return;
-
 		let resp = (
+
 			await axios.post(
-				`/api/signup`,
+				`${env.API}/signup`,
 				{ email, password },
 				{
 					headers: {
@@ -92,6 +90,7 @@
 			goto('/');
 		}
 	}
+
 </script>
 
 <div class:hide={!show} class="w-full opacity-100 duration-[2000ms]">
@@ -114,7 +113,7 @@
 					type="text"
 					name="floating_username"
 					class="peer block w-full appearance-none !rounded-none !border-0 !border-b-2 !border-surface-300 !bg-transparent py-2.5 px-0 text-sm text-surface-900 focus:border-tertiary-600 focus:outline-none focus:ring-0 dark:border-surface-600 dark:text-white dark:focus:border-tertiary-500"
-					placeholder=" "
+					placeholder=""
 					required
 				/>
 				<label
@@ -281,7 +280,7 @@
 
 		<!-- TODO Skeleton Css not working -->
 		<div class=" flex items-center gap-5">
-			<button class="btn btn-sm mt-4 rounded-md bg-white text-black">
+			<button class="btn btn-sm mt-4 rounded-md bg-white text-black" on:click={signup}>
 				{$LL.LOGIN_SignUp()}
 			</button>
 			<!-- <div class="checkbox required mt-3 flex items-center space-x-2">

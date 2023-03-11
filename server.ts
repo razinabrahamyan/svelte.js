@@ -1,11 +1,14 @@
 import cors from 'cors';
 import schemas from './src/collections';
 import { fieldsToSchema, saveFiles, parse } from './src/utils/utils';
-import env from './env';
+import env from './env'
 import multer from 'multer';
-import sharp from "sharp";
+import {createCanvas , Image} from 'canvas';
+import  sharp from 'sharp'
 
-// console.log(sharp, "ssssssssssss")
+// console.log(createCanvas())
+
+
 
 // Lucia
 import adapter from '@lucia-auth/adapter-mongoose';
@@ -43,7 +46,7 @@ mongoose.connect(env.DB_HOST, {
 	user: env.DB_USER,
 	pass: env.DB_PASSWORD,
 	dbName: env.DB_NAME
-});
+}).then(() => console.log("db ok"));
 
 // Store Mongoose models representing each collection in the database
 let collections: { [Key: string]: mongoose.Model<any> } = {};
@@ -71,7 +74,6 @@ app.use(cookieParser());
 app.use(express.static('./build'));
 app.get('/get_collections', async (req, res) => {
 	console.log(schemas);
-
 	res.send(schemas);
 });
 
@@ -88,13 +90,14 @@ app.get('/api/find', async (req, res) => {
 
 // Sign In Route
 app.post('/api/signin', async (req, res) => {
-	console.log(req.cookies);
+
 	let user = await auth
 		.authenticateUser('email', req.body.email, req.body.password)
 		.catch(() => null);
+
+
 	if (!user) return res.send({ status: 404 });
 	const session = await auth.createSession(user.userId);
-	console.log(user);
 	console.log(session);
 
 	res.send({ user: user.username, session: session.sessionId, status: 200 });
@@ -102,7 +105,7 @@ app.post('/api/signin', async (req, res) => {
 
 // Sign Up Route
 app.post('/api/signup', async (req, res) => {
-	let user = await auth
+	const user = await auth
 		.createUser('email', req.body.email, {
 			password: req.body.password,
 			attributes: {
@@ -110,7 +113,8 @@ app.post('/api/signup', async (req, res) => {
 			}
 		})
 		.catch(() => null);
-	console.log(user);
+	console.log( "2222");
+
 	if (!user) return res.send({ status: 404 });
 	const session = await auth.createSession(user.userId);
 	res.send({ user: user.username, session: session.sessionId, status: 200 });
@@ -138,6 +142,7 @@ app.get('/api/:endpoint', async (req, res) => {
 
 // PATCH request that updates a single entry in a specified collection, using data from the request body.
 app.patch('/api/:endpoint', async (req, res) => {
+
 	let collection = collections[req.params.endpoint];
 	let { _id, ...formData } = req.body;
 	console.log(formData);
@@ -166,12 +171,13 @@ app.delete('/api/:endpoint', async (req, res) => {
 
 // POST request that creates one or more new entries in a specified collection, using data from the request body.
 // app.post('/api/:endpoint', async (req, res) => {
+// 	console.log(req.body , "----------------")
 // 	for (let key in req.body) {
 // 		try {
 // 			req.body[key] = JSON.parse(req.body[key]);
 // 		} catch (e) {}
 // 	}
-// 	console.log(req.body);
+//
 // 	let collection = collections[req.params.endpoint];
 // 	if (!collection) return 'collection not found!!';
 // 	let files = saveFiles(req);
@@ -185,6 +191,11 @@ app.delete('/api/:endpoint', async (req, res) => {
 // POST request that creates one or more new entries in a specified collection, using data from the request body.
 
 app.post('/api/:endpoint', async (req, res) => {
+
+
+	console.log(req.files , "===================")
+	console.log(req.body.crop_left, "ssssssssssssss")
+
 	if(req.files && req.body.crop_left){
 		const canvas = createCanvas(+req.body.width, +req.body.height);
 		const ctx = canvas.getContext('2d');
@@ -194,7 +205,6 @@ app.post('/api/:endpoint', async (req, res) => {
 			const {buffer, fieldname, ...meta} = file;
 			const blur_areas: any = [];
 			for (const el of JSON.parse(req.body.blur_areas)) {
-
 				let top = Math.floor(Math.sin(+req.body.rotate * (Math.PI/180))*((req.body.width * req.body.rotateScale - req.body.width)/2) + Math.cos(+req.body.rotate * (Math.PI/180)) * ((req.body.height * req.body.rotateScale - req.body.height)/2) - +el.top)
 				let left = Math.floor(Math.cos(+req.body.rotate * (Math.PI/180))*((req.body.width * req.body.rotateScale - req.body.width)/2) + Math.sin(+req.body.rotate * (Math.PI/180)) * ((req.body.height * req.body.rotateScale - req.body.height)/2) - +el.left)
 				top = Math.abs(top);
@@ -207,7 +217,6 @@ app.post('/api/:endpoint', async (req, res) => {
 				}else if( +req.body.rotate >= 90 ){
 					top = Math.abs(req.body.height - top - el.height)
 				}
-
 				if(top + +el.height > +req.body.height){
 					top -= top + +el.height - req.body.height
 				}
@@ -258,7 +267,7 @@ app.post('/api/:endpoint', async (req, res) => {
 		res.send(await collection.insertMany({...req.body, ...files}));
 	}
 });
-	
+
 
 // routes for frontend
 app.get("/",(req,res)=>{
